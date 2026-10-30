@@ -1,0 +1,24 @@
+# Personal data: thumbnails and file lists are private. Never publish them.
+cache/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+iPhone Export/
+*.log
+
+# Generated on the user's PC
+*.exe
+*.pem
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editors and OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store

@@ -1,0 +1,54 @@
+name: Bug report / Signaler un bug
+description: Something does not work / Quelque chose ne marche pas
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Privacy / Vie privée :** never attach personal photos, file lists or the `deletions.log` content without removing private names. / N'ajoute jamais tes photos, tes listes de fichiers ou le contenu de `deletions.log` sans retirer les noms privés.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? / Que s'est-il passé ?
+      description: What you did, what you expected, what you saw. / Ce que tu as fait, ce que tu attendais, ce que tu as vu.
+    validations:
+      required: true
+  - type: input
+    id: iphone
+    attributes:
+      label: iPhone model and iOS version / Modèle d'iPhone et version d'iOS
+      placeholder: iPhone 15, iOS 18.5
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version and language / Version et langue de Windows
+      placeholder: Windows 11 24H2, English
+    validations:
+      required: true
+  - type: dropdown
+    id: apple
+    attributes:
+      label: Apple software installed / Logiciel Apple installé
+      options:
+        - iTunes (apple.com)
+        - iTunes (Microsoft Store)
+        - Apple Devices (Microsoft Store)
+        - I don't know / Je ne sais pas
+    validations:
+      required: true
+  - type: dropdown
+    id: icloud
+    attributes:
+      label: iCloud Photos
+      options:
+        - On / Activé
+        - Off / Désactivé
+        - I don't know / Je ne sais pas
+  - type: textarea
+    id: log
+    attributes:
+      label: Error message or log / Message d'erreur ou journal
+      description: "`%LOCALAPPDATA%\\iPhoneRocket\\rocket.log`"
+      render: text

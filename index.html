@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iPhone Rocket</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23ff5b2e'/%3E%3Cpath d='M16 5c4 3 6 7 6 12l-2 4h-8l-2-4c0-5 2-9 6-12z' fill='%23fff'/%3E%3Ccircle cx='16' cy='14' r='2.4' fill='%23ff5b2e'/%3E%3Cpath d='M13 23h6l-3 5z' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f6f6f3;--panel:#fff;--raise:#efefeb;--line:#e2e2dc;--text:#17181b;--muted:#6a6e77;
+  --accent:#e4461a;--accent-ink:#fff;--mark:#ffd9cc;--shade:rgba(20,20,22,.55);--dot-ok:#1a9d5c;--dot-warn:#c98a10;--dot-off:#9a9da4;
+  --danger:#c6281c;--danger-ink:#fff;--danger-soft:#fbe6e3;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0c0d10;--panel:#15171b;--raise:#1e2026;--line:#282b33;--text:#eceef2;--muted:#8d92a0;
+  --accent:#ff5b2e;--accent-ink:#17120f;--mark:#5a2a1a;--shade:rgba(0,0,0,.7);--dot-ok:#35c98a;--dot-warn:#efb034;--dot-off:#676b76;
+  --danger:#f0483a;--danger-ink:#1a0806;--danger-soft:#3a1714;
+}}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:14px/1.4 "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header{display:flex;align-items:center;gap:16px;padding:12px 16px 8px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:650;font-size:15px;white-space:nowrap}
+.brand svg{width:24px;height:24px;flex:none}
+.search{flex:1;max-width:720px;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:0 12px;height:40px}
+.search:focus-within{border-color:var(--accent)}
+.search svg{width:16px;height:16px;color:var(--muted);flex:none}
+.search input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:15px}
+.search input::placeholder{color:var(--muted)}
+kbd{font:12px ui-monospace,Consolas,monospace;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 5px}
+.pill{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;white-space:nowrap}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--dot-off)}
+.pill.ok i{background:var(--dot-ok)}
+.pill.warn i{background:var(--dot-warn)}
+
+nav{display:flex;align-items:center;gap:6px;padding:0 16px 10px;flex-wrap:wrap}
+.chip{border:1px solid transparent;background:none;border-radius:8px;padding:4px 10px;color:var(--muted);white-space:nowrap}
+.chip b{font-weight:500;margin-left:4px;font-variant-numeric:tabular-nums;opacity:.75}
+.chip:hover{background:var(--raise)}
+.chip[aria-pressed=true]{background:var(--text);color:var(--bg)}
+.tools{margin-left:auto;display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px}
+.tools select{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:3px 6px}
+.tools input{width:96px;accent-color:var(--accent)}
+
+#notice{display:none;margin:0 16px 8px;padding:7px 12px;border-radius:8px;background:var(--raise);color:var(--muted);font-size:13px}
+#notice.on{display:block}
+#notice button{margin-left:8px;padding:2px 8px}
+#line{height:2px;background:transparent}
+#line i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
+
+main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;position:relative;scrollbar-gutter:stable;overscroll-behavior:contain}
+#space{position:relative;width:100%}
+.row{position:absolute;left:16px;right:16px;display:grid;contain:layout paint;will-change:transform}
+.head{position:absolute;left:16px;right:16px;display:flex;align-items:flex-end;padding-bottom:8px;font-weight:600;font-size:15px}
+.head span{color:var(--muted);font-weight:400;font-size:13px;margin-left:8px}
+.card{min-width:0;cursor:pointer}
+.th{position:relative;aspect-ratio:1;background:var(--raise);border-radius:8px;overflow:hidden}
+.th img{width:100%;height:100%;object-fit:cover;display:block;opacity:0}
+.th img.in{opacity:1;transition:opacity .12s}
+.th .ph{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:var(--muted);font-size:12px;letter-spacing:.04em}
+.th img.bad{display:none}
+.th img.bad+.ph{display:flex}
+.card:hover .th{outline:2px solid var(--line)}
+.card.sel .th{outline:3px solid var(--accent);outline-offset:-3px}
+.tag{position:absolute;right:6px;bottom:6px;background:var(--shade);color:#fff;border-radius:5px;padding:0 5px;font-size:12px;font-variant-numeric:tabular-nums}
+.flags{position:absolute;left:6px;bottom:6px;display:flex;gap:4px}
+.flags span{background:var(--shade);color:#fff;border-radius:5px;padding:0 5px;font-size:11px}
+.ck{position:absolute;top:6px;left:6px;width:24px;height:24px;border-radius:50%;border:2px solid #fff;background:var(--shade);opacity:0;padding:0;display:grid;place-items:center;color:transparent}
+.card:hover .ck,.ck:focus-visible,.selecting .ck{opacity:1}
+.card.sel .ck{opacity:1;background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ck svg{width:14px;height:14px}
+.nm{font:12px/18px ui-monospace,"Cascadia Mono",Consolas,monospace;color:var(--muted);height:20px;padding-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+mark{background:var(--mark);color:var(--text);border-radius:2px}
+
+#empty{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:24px;text-align:center}
+#empty.on{display:flex}
+#empty .box{max-width:440px}
+#empty h2{font-size:20px;margin:0 0 8px;font-weight:650}
+#empty p{margin:0 0 16px;color:var(--muted)}
+.meter{height:6px;border-radius:3px;background:var(--raise);overflow:hidden;margin-top:8px}
+.meter i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
+
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 12px}
+.btn:hover{background:var(--raise)}
+.btn.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.main:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:var(--danger-ink);font-weight:600}
+.btn.danger:hover:not(:disabled){filter:brightness(1.08)}
+.btn.danger-line{color:var(--danger);border-color:var(--danger)}
+
+#dlg{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;padding:16px;background:var(--shade)}
+#dlg.on{display:flex}
+#dlg .panel{width:460px;max-width:100%;max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:12px}
+#dlg h2{font-size:18px;margin:0;font-weight:650}
+#dlg p{margin:0}
+#dlg ul{margin:0;padding:0;list-style:none;font:12px/1.6 ui-monospace,"Cascadia Mono",Consolas,monospace;color:var(--muted)}
+#dlg .warn{background:var(--danger-soft);border-radius:8px;padding:10px 12px}
+#dlg label{display:flex;gap:8px;align-items:flex-start}
+#dlg label input{margin-top:3px;accent-color:var(--accent)}
+#dlg input[type=text]{width:100%;height:40px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:0 12px;font:15px ui-monospace,Consolas,monospace;letter-spacing:.06em}
+#dlg .a{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+
+#bar{display:none;align-items:center;gap:12px;padding:10px 16px;background:var(--panel);border-top:1px solid var(--line)}
+#bar.on{display:flex}
+#bar .sp{margin-left:auto;display:flex;gap:8px}
+
+#job{position:fixed;right:16px;bottom:16px;width:340px;max-width:calc(100vw - 32px);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;display:none;box-shadow:0 8px 28px rgba(0,0,0,.28);z-index:30}
+#job.on{display:block}
+#job .t{font-weight:600}
+#job .s{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#job .a{display:flex;gap:8px;margin-top:10px;justify-content:flex-end}
+
+#lb{position:fixed;inset:0;background:var(--bg);z-index:20;display:none}
+#lb.on{display:flex}
+#stage{flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;background:#000}
+#stage img,#stage video{max-width:100%;max-height:100%;object-fit:contain;display:block}
+#stage img[src^="/thumb"],#stage img[src^="/file"]{width:100%;height:100%}
+#stage .msg{position:absolute;left:16px;right:16px;bottom:16px;text-align:center;color:#fff;background:rgba(0,0,0,.65);border-radius:8px;padding:8px 12px;font-size:13px}
+.nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;border:0;border-radius:8px;background:rgba(255,255,255,.12);color:#fff;font-size:22px}
+.nav:hover{background:rgba(255,255,255,.24)}
+#prev{left:12px}#next{right:12px}
+aside{width:320px;flex:none;padding:16px;border-left:1px solid var(--line);overflow:auto;display:flex;flex-direction:column;gap:12px;position:relative}
+aside h3{margin:0;font-size:16px;font-weight:650;word-break:break-all;padding-right:32px}
+dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13px}
+dt{color:var(--muted)}dd{margin:0;word-break:break-all}
+.acts{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+#close{position:absolute;top:12px;right:12px;width:32px;height:32px;padding:0;font-size:16px}
+.hint{color:var(--muted);font-size:12px;margin:0}
+
+@media (max-width:820px){
+  header{flex-wrap:wrap}.search{order:3;flex-basis:100%;max-width:none}
+  #lb{flex-direction:column}aside{width:auto;max-height:44%;border-left:0;border-top:1px solid var(--line)}
+  .tools label{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><path d="M16 5c4 3 6 7 6 12l-2 4h-8l-2-4c0-5 2-9 6-12z" fill="#fff"/><circle cx="16" cy="14" r="2.4" fill="var(--accent)"/><path d="M13 23h6l-3 5z" fill="#fff"/></svg>
+    iPhone Rocket
+  </div>
+  <label class="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>
+    <input id="q" type="search" data-i18n-placeholder="search.placeholder" data-i18n-aria="search.label" autocomplete="off" spellcheck="false" autofocus>
+    <kbd>/</kbd>
+  </label>
+  <div id="pill" class="pill" role="status"><i></i><span data-i18n="status.starting"></span></div>
+</header>
+<nav data-i18n-aria="filters.label">
+  <span id="chips" style="display:contents"></span>
+  <div class="tools">
+    <span id="count"></span>
+    <select id="sort" data-i18n-aria="sort.label">
+      <option value="date" data-i18n="sort.date"></option>
+      <option value="old" data-i18n="sort.old"></option>
+      <option value="size" data-i18n="sort.size"></option>
+      <option value="name" data-i18n="sort.name"></option>
+    </select>
+    <label><span data-i18n="zoom.label"></span> <input id="zoom" type="range" min="96" max="280" step="8" value="150" data-i18n-aria="zoom.aria"></label>
+    <select id="lang" data-i18n-aria="lang.label">
+      <option value="en">English</option>
+      <option value="fr">Français</option>
+    </select>
+  </div>
+</nav>
+<div id="notice" role="status"></div>
+<div id="line"><i></i></div>
+<main id="scroll">
+  <div id="space"></div>
+  <div id="empty"><div class="box" id="emptybox"></div></div>
+</main>
+<div id="bar">
+  <span id="barinfo"></span>
+  <div class="sp">
+    <button class="btn" id="clear" data-i18n="bar.clear"></button>
+    <button class="btn danger-line" id="bardel" data-i18n="bar.delete"></button>
+    <button class="btn main" id="barcopy" data-i18n="bar.copy"></button>
+  </div>
+</div>
+<div id="job" role="status"></div>
+
+<div id="lb" role="dialog" aria-modal="true" data-i18n-aria="lb.label">
+  <div id="stage"></div>
+  <aside id="side"></aside>
+</div>
+<div id="dlg" role="alertdialog" aria-modal="true" aria-labelledby="dlgt"><div class="panel" id="dlgbox"></div></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const scroller = $('scroll'), space = $('space');
+const LANGS = ['en', 'fr'];
+const PLAYABLE_IMG = /\.(jpe?g|png|webp|gif|bmp)$/i;
+const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4 10-11"/></svg>';
+const GAP = 8, LABEL = 24, HEAD = 44, OVERSCAN = 700;
+
+const FILTERS = [
+  ['all', (i,q) => !i.h && !i.r && (!i.l || q)],
+  ['photo', i => i.k==='p' && !i.h && !i.r],
+  ['video', (i,q) => i.k==='v' && !i.h && !i.r && (!i.l || q)],
+  ['edited', i => i.e && !i.h && !i.r],
+  ['cloud', i => i.c && !i.h && !i.r],
+  ['hidden', i => i.h && !i.r],
+  ['trash', i => i.r],
+];
+const OPTIONAL_FILTERS = new Set(['edited', 'cloud', 'hidden', 'trash']);
+
+let lang = 'en', strings = {}, fallback = {}, rules = new Intl.PluralRules('en');
+let items = [], view = [], rows = [], rev = -1, filter = 'all', query = '', sort = 'date';
+let cols = 4, cell = 150, zoom = 150, lastClick = -1, status = {}, current = -1, connected = false;
+const sel = new Set(), live = new Map();
+
+const load = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
+const save = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// Translation. English is the fallback, so a partial translation still works.
+function t(key, params) {
+  const text = strings[key] ?? fallback[key] ?? key;
+  return params ? text.replace(/\{(\w+)\}/g, (m, name) => params[name] ?? m) : text;
+}
+const tn = (key, n, params) => t(`${key}.${rules.select(n) === 'one' ? 'one' : 'other'}`, {n: fmtNum(n), ...params});
+const fmtNum = n => n.toLocaleString(lang);
+function fmtSize(bytes) {
+  const decimals = value => value.toLocaleString(lang, {maximumFractionDigits: value < 10 ? 1 : 0});
+  if (bytes < 1e6) return `${Math.max(1, Math.round(bytes / 1e3)).toLocaleString(lang)} ${t('unit.kb')}`;
+  if (bytes < 1e9) return `${decimals(bytes / 1e6)} ${t('unit.mb')}`;
+  return `${(bytes / 1e9).toLocaleString(lang, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${t('unit.gb')}`;
+}
+const fmtDur = s => { s = Math.round(s); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); };
+const fmtDate = stamp => stamp ? new Date(stamp).toLocaleString(lang, {dateStyle:'long', timeStyle:'short'}) : t('date.unknown');
+const errorText = e => {
+  const key = `errors.${e?.code}`;
+  return strings[key] || fallback[key] ? t(key, e.params) : t('errors.unknown', {detail: e?.code ?? ''});
+};
+function monthLabel(month) {
+  if (month < 0) return t('date.unknownMonth');
+  const text = new Date(Math.floor(month / 12), month % 12, 1).toLocaleDateString(lang, {month:'long', year:'numeric'});
+  return text[0].toUpperCase() + text.slice(1);
+}
+
+async function loadLang(next) {
+  const read = async code => (await fetch(`/locales/${code}.json`)).json();
+  if (!Object.keys(fallback).length) fallback = await read('en');
+  strings = next === 'en' ? fallback : await read(next);
+  lang = next;
+  rules = new Intl.PluralRules(lang);
+  document.documentElement.lang = lang;
+  $('lang').value = lang;
+  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
+  for (const el of document.querySelectorAll('[data-i18n-placeholder]')) el.placeholder = t(el.dataset.i18nPlaceholder);
+  for (const el of document.querySelectorAll('[data-i18n-aria]')) el.setAttribute('aria-label', t(el.dataset.i18nAria));
+}
+function preferredLang() {
+  const saved = load('lang', '');
+  if (LANGS.includes(saved)) return saved;
+  for (const code of navigator.languages || []) {
+    const short = code.slice(0, 2).toLowerCase();
+    if (LANGS.includes(short)) return short;
+  }
+  return 'en';
+}
+const thumbUrl = i => '/thumb?p=' + encodeURIComponent(i.p);
+const fileUrl = (i, v) => '/file?p=' + encodeURIComponent(i.p) + (v ? '&v=' + v : '');
+
+function indexItems() {
+  for (const i of items) {
+    const d = i.t ? new Date(i.t) : null;
+    i.month = d ? d.getFullYear() * 12 + d.getMonth() : -1;
+    i.nl = i.n.toLowerCase();
+    i.ol = i.o.toLowerCase();
+    i.dk = d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : '';
+  }
+}
+
+function matches(i, terms) {
+  for (const term of terms) if (!i.nl.includes(term) && !i.ol.includes(term) && !i.dk.startsWith(term)) return false;
+  return true;
+}
+// An iPhone name holding the term goes before a long original id holding it by chance.
+function rank(i, terms) {
+  const stem = i.nl.replace(/\.[^.]+$/, '');
+  let score = 0;
+  for (const term of terms) score += stem === term || stem.endsWith(term) ? 0 : i.nl.includes(term) ? 1 : 2;
+  return score;
+}
+
+function apply(keepScroll) {
+  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const hits = terms.length ? items.filter(i => matches(i, terms)) : items;
+  const fn = FILTERS.find(f => f[0] === filter)[1];
+  view = hits.filter(i => fn(i, terms.length));
+  if (sort === 'old') view.sort((a,b) => a.t - b.t);
+  else if (sort === 'size') view.sort((a,b) => b.s - a.s);
+  else if (sort === 'name') view.sort((a,b) => a.nl.localeCompare(b.nl, lang, {numeric:true}));
+  if (terms.length && sort === 'date') {
+    const scored = new Map(view.map(i => [i, rank(i, terms)]));
+    view.sort((a,b) => scored.get(a) - scored.get(b) || b.t - a.t);
+  }
+  $('chips').innerHTML = FILTERS.map(([key, f]) => {
+    const n = hits.reduce((c,i) => c + (f(i, terms.length) ? 1 : 0), 0);
+    if (OPTIONAL_FILTERS.has(key) && !n && filter !== key) return '';
+    return `<button class="chip" data-f="${key}" aria-pressed="${filter===key}">${esc(t('filter.' + key))}<b>${fmtNum(n)}</b></button>`;
+  }).join('');
+  const bytes = view.reduce((c,i) => c + i.s, 0);
+  $('count').textContent = (terms.length ? tn('results', view.length) + ' · ' : '') + fmtSize(bytes);
+  lastClick = -1;
+  layout(keepScroll);
+  showEmpty();
+}
+
+function layout(keepScroll) {
+  const width = scroller.clientWidth - 32;
+  cols = Math.max(2, Math.floor((width + GAP) / (zoom + GAP)));
+  cell = (width - GAP * (cols - 1)) / cols;
+  const rowH = cell + LABEL + GAP;
+  rows = [];
+  let y = 0, i = 0;
+  const heads = sort === 'date' && !query.trim() || sort === 'old';
+  while (i < view.length) {
+    if (heads) {
+      const month = view[i].month;
+      let end = i;
+      while (end < view.length && view[end].month === month) end++;
+      rows.push({y, h:HEAD, head:monthLabel(month), n:end - i});
+      y += HEAD;
+      for (; i < end; i += cols) { rows.push({y, h:rowH, s:i, e:Math.min(i + cols, end)}); y += rowH; }
+    } else {
+      rows.push({y, h:rowH, s:i, e:Math.min(i + cols, view.length)});
+      y += rowH; i += cols;
+    }
+  }
+  space.style.height = (y + 16) + 'px';
+  for (const el of live.values()) el.remove();
+  live.clear();
+  if (!keepScroll) scroller.scrollTop = 0;
+  paint();
+}
+
+function firstRow(top) {
+  let lo = 0, hi = rows.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (rows[mid].y + rows[mid].h < top) lo = mid + 1; else hi = mid;
+  }
+  return lo;
+}
+
+function highlight(name) {
+  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (!terms.length) return esc(name);
+  const lower = name.toLowerCase();
+  for (const term of terms) {
+    const at = lower.indexOf(term);
+    if (at >= 0) return esc(name.slice(0,at)) + '<mark>' + esc(name.slice(at, at + term.length)) + '</mark>' + esc(name.slice(at + term.length));
+  }
+  return esc(name);
+}
+
+function cardHtml(i, index, loadNow) {
+  const flags = [i.e ? `<span>${esc(t('card.edited'))}</span>` : '', i.c ? `<span>${esc(t('card.icloud'))}</span>` : ''].join('');
+  const ext = esc(i.n.split('.').pop());
+  return `<div class="card${sel.has(i.p) ? ' sel' : ''}" data-i="${index}"><div class="th">` +
+    `<img alt="" ${loadNow ? 'src' : 'data-src'}="${thumbUrl(i)}" decoding="async"><div class="ph">${ext}</div>` +
+    (i.k === 'v' && i.d ? `<span class="tag">${fmtDur(i.d)}</span>` : '') +
+    (flags ? `<div class="flags">${flags}</div>` : '') +
+    (i.c ? '' : `<button class="ck" aria-label="${esc(t('card.select', {name: i.n}))}">${CHECK}</button>`) +
+    `</div><div class="nm" title="${esc(i.n)}">${highlight(i.n)}</div></div>`;
+}
+
+let lastTop = 0, idle = 0;
+function paint() {
+  const top = scroller.scrollTop, height = scroller.clientHeight;
+  const fast = Math.abs(top - lastTop) > height * 1.5;
+  lastTop = top;
+  if (!rows.length) return;
+  const from = firstRow(top - OVERSCAN), to = top + height + OVERSCAN;
+  const wanted = new Set();
+  for (let r = from; r < rows.length && rows[r].y < to; r++) {
+    wanted.add(r);
+    if (live.has(r)) continue;
+    const row = rows[r], el = document.createElement('div');
+    if (row.head) {
+      el.className = 'head';
+      el.style.cssText = `top:${row.y}px;height:${row.h}px`;
+      el.innerHTML = `${esc(row.head)}<span>${fmtNum(row.n)}</span>`;
+    } else {
+      el.className = 'row';
+      el.style.cssText = `top:${row.y}px;grid-template-columns:repeat(${cols},minmax(0,1fr));gap:${GAP}px`;
+      let html = '';
+      for (let i = row.s; i < row.e; i++) html += cardHtml(view[i], i, !fast);
+      el.innerHTML = html;
+    }
+    space.appendChild(el);
+    live.set(r, el);
+  }
+  for (const [r, el] of live) {
+    if (wanted.has(r)) continue;
+    // Clearing src cancels pending loads: fast scrolling does not build a queue.
+    for (const img of el.querySelectorAll('img')) img.src = '';
+    el.remove();
+    live.delete(r);
+  }
+  if (fast) { clearTimeout(idle); idle = setTimeout(hydrate, 70); }
+}
+function hydrate() {
+  for (const img of space.querySelectorAll('img[data-src]')) { img.src = img.dataset.src; img.removeAttribute('data-src'); }
+}
+
+let queued = false;
+scroller.addEventListener('scroll', () => {
+  if (queued) return;
+  queued = true;
+  requestAnimationFrame(() => { queued = false; paint(); });
+}, {passive:true});
+space.addEventListener('load', e => { if (e.target.tagName === 'IMG') e.target.classList.add('in'); }, true);
+space.addEventListener('error', e => { if (e.target.tagName === 'IMG' && e.target.getAttribute('src')) e.target.classList.add('bad'); }, true);
+
+function refreshCards() {
+  document.body.classList.toggle('selecting', sel.size > 0);
+  for (const card of space.querySelectorAll('.card')) card.classList.toggle('sel', sel.has(view[+card.dataset.i]?.p));
+  const picked = items.filter(i => sel.has(i.p));
+  $('bar').classList.toggle('on', picked.length > 0);
+  $('barinfo').textContent = tn('bar.selected', picked.length, {size: fmtSize(picked.reduce((c,i) => c + i.s, 0))});
+  layoutOnResize();
+}
+function toggle(index, shift) {
+  const i = view[index];
+  if (i.c) return;
+  if (shift && lastClick >= 0) {
+    const on = !sel.has(i.p);
+    for (let n = Math.min(lastClick,index); n <= Math.max(lastClick,index); n++) if (!view[n].c) on ? sel.add(view[n].p) : sel.delete(view[n].p);
+  } else if (sel.has(i.p)) sel.delete(i.p); else sel.add(i.p);
+  lastClick = index;
+  refreshCards();
+}
+space.addEventListener('click', e => {
+  const card = e.target.closest('.card');
+  if (!card) return;
+  const index = +card.dataset.i;
+  if (e.target.closest('.ck') || e.ctrlKey || e.metaKey || e.shiftKey || sel.size) toggle(index, e.shiftKey);
+  else openLb(index);
+});
+$('chips').addEventListener('click', e => {
+  const b = e.target.closest('.chip');
+  if (b) { filter = b.dataset.f; apply(); }
+});
+$('sort').onchange = e => { sort = e.target.value; apply(); };
+$('zoom').oninput = e => { zoom = +e.target.value; save('zoom', zoom); layout(true); };
+$('lang').onchange = async e => {
+  save('lang', e.target.value);
+  await loadLang(e.target.value);
+  apply(true);
+  refreshCards();
+  showStatus(status);
+  if ($('lb').classList.contains('on')) renderLb();
+  if (status.job) showJobs(status);
+};
+let typing = 0;
+$('q').oninput = e => { query = e.target.value; clearTimeout(typing); typing = setTimeout(apply, items.length > 20000 ? 40 : 0); };
+$('clear').onclick = () => { sel.clear(); refreshCards(); };
+$('barcopy').onclick = () => copy([...sel], 'auto');
+$('bardel').onclick = () => askDelete([...sel]);
+
+let lastWidth = 0;
+function layoutOnResize() {
+  const w = scroller.clientWidth;
+  if (w !== lastWidth) { lastWidth = w; layout(true); }
+}
+new ResizeObserver(layoutOnResize).observe(scroller);
+
+function showEmpty() {
+  const box = $('empty');
+  const page = (title, body, extra = '') => `<h2>${esc(title)}</h2>${body ? `<p>${esc(body)}</p>` : ''}${extra}`;
+  let html = '';
+  if (status.state === 'service' && !items.length) {
+    html = page(t('empty.service.title'), t('empty.service.body'), `<button class="btn main" id="startsvc">${esc(t('empty.service.button'))}</button>`);
+  } else if (status.state === 'nodevice' && !items.length) {
+    html = page(t('empty.nodevice.title'), t('empty.nodevice.body'));
+  } else if (status.state === 'error' && !items.length) {
+    html = page(t('empty.error.title'), errorText(status.error), `<p>${esc(t('empty.error.body'))}</p>`);
+  } else if (status.state === 'ok' && !status.ready) {
+    const pct = Math.round((status.progress || 0) * 100);
+    html = page(t('empty.preparing.title'), t('empty.preparing.body'), `<div class="meter"><i style="width:${pct}%"></i></div>`);
+  } else if (!status.ready && !items.length) {
+    html = page(t('empty.connecting.title'));
+  } else if (!view.length && items.length) {
+    const q = query.trim();
+    html = q ? page(t('empty.noresult.title', {query: q}), t('empty.noresult.body')) : page(t('empty.nothing.title'));
+  }
+  box.classList.toggle('on', !!html);
+  $('emptybox').innerHTML = html;
+  const start = $('startsvc');
+  if (start) start.onclick = () => post('/api/start-service', {});
+}
+
+async function post(url, data) {
+  const res = await fetch(url, {method:'POST', headers:{'X-Rocket':'1','Content-Type':'application/json'}, body:JSON.stringify(data)});
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw json;
+  return json;
+}
+async function copy(paths, mode) {
+  try {
+    await post('/api/copy', {paths, mode});
+    sel.clear(); refreshCards();
+    tick();
+  } catch (err) {
+    jobBox(`<div class="t">${esc(t('job.copyImpossible'))}</div><div class="s">${esc(errorText(err))}</div><div class="a"><button class="btn" data-x>${esc(t('job.close'))}</button></div>`);
+  }
+}
+
+function closeDlg() {
+  $('dlg').classList.remove('on');
+  $('dlgbox').innerHTML = '';
+}
+function askDelete(paths) {
+  const wanted = new Set(paths);
+  const picked = items.filter(i => wanted.has(i.p));
+  const ok = picked.filter(i => i.x), skipped = picked.length - ok.length;
+  const box = $('dlgbox');
+  $('dlg').classList.add('on');
+  if (!ok.length) {
+    box.innerHTML = `<h2 id="dlgt">${esc(t('delete.impossible.title'))}</h2><p>${esc(t('delete.impossible.body'))}</p>
+      <div class="a"><button class="btn" id="dno">${esc(t('delete.close'))}</button></div>`;
+    $('dno').onclick = closeDlg;
+    $('dno').focus();
+    return;
+  }
+  const bytes = ok.reduce((c,i) => c + i.s, 0), count = ok.length, size = fmtSize(bytes);
+  const names = ok.slice(0,5).map(i => `<li>${esc(i.n)} · ${fmtSize(i.s)}</li>`).join('') + (count > 5 ? `<li>${esc(t('delete.more', {n: fmtNum(count - 5)}))}</li>` : '');
+  box.innerHTML = `<h2 id="dlgt">${esc(tn('delete.title', count))}</h2>
+    <ul>${names}</ul>
+    <div class="warn"><b>${esc(t('delete.warn.strong'))}</b> ${esc(t(`delete.warn.${count > 1 ? 'other' : 'one'}`))}</div>
+    <p class="hint">${esc(t('delete.experimental'))}</p>
+    <label><input type="checkbox" id="dbak" checked><span>${esc(t('delete.backup', {size, path: t('delete.backupPath')}))}</span></label>
+    ${skipped ? `<p class="hint">${esc(tn('delete.skipped', skipped))}</p>` : ''}
+    <div class="a"><button class="btn" id="dno">${esc(t('delete.cancel'))}</button><button class="btn danger-line" id="dyes">${esc(t('delete.continue'))}</button></div>`;
+  $('dno').onclick = closeDlg;
+  $('dno').focus();
+  $('dyes').onclick = () => {
+    const backup = $('dbak').checked, word = t('delete.word');
+    const text = esc(tn('delete.final.body', count, {word: '\u0000', size})).replace('\u0000', `<b>${esc(word)}</b>`);
+    box.innerHTML = `<h2 id="dlgt">${esc(t('delete.final.title'))}</h2>
+      <p>${text}${backup ? '' : ` <b>${esc(t('delete.final.nobackup'))}</b>`}</p>
+      <input type="text" id="dword" aria-label="${esc(t('delete.final.aria'))}" autocomplete="off" spellcheck="false">
+      <div class="a"><button class="btn" id="dno">${esc(t('delete.cancel'))}</button><button class="btn danger" id="dgo" disabled>${esc(t('delete.final.button'))}</button></div>`;
+    const input = $('dword'), go = $('dgo');
+    $('dno').onclick = closeDlg;
+    input.oninput = () => { go.disabled = input.value !== word; };
+    input.onkeydown = e => { if (e.key === 'Enter' && !go.disabled) go.click(); };
+    input.focus();
+    go.onclick = async () => {
+      go.disabled = true;
+      closeDlg();
+      if ($('lb').classList.contains('on')) closeLb();
+      try {
+        await post('/api/delete', {paths: ok.map(i => i.p), confirm: word, backup, lang});
+        sel.clear(); refreshCards();
+        jobHidden = 0;
+        tick();
+      } catch (err) {
+        jobBox(`<div class="t">${esc(t('job.refused'))}</div><div class="s">${esc(errorText(err))}</div><div class="a"><button class="btn" data-x>${esc(t('job.close'))}</button></div>`);
+      }
+    };
+  };
+}
+
+function showDelete(job) {
+  if (job.dry) return;
+  if (job.active) {
+    const pct = job.files ? job.doneFiles / job.files * 100 : 0;
+    const step = job.step ? ' · ' + t('job.step.' + job.step) : '';
+    jobBox(`<div class="t">${esc(t('job.deleting', {done: fmtNum(Math.min(job.doneFiles + 1, job.files)), total: fmtNum(job.files)}))}</div>` +
+      `<div class="s">${esc(job.current + step)}</div><div class="meter"><i style="width:${pct}%"></i></div>` +
+      `<div class="s" style="margin-top:6px">${esc(t('job.deleteHint'))}</div>`);
+  } else if (job.finished && job.finished !== jobHidden) {
+    const title = job.errors.length ? (job.deleted ? t('job.deletePartial') : t('job.deleteNone')) : t('job.deleteDone');
+    const parts = [];
+    if (job.deleted) parts.push(tn('job.deleted', job.deleted, {size: fmtSize(job.freed)}));
+    if (job.errors.length) parts.push(tn('job.refused', job.errors.length));
+    const first = job.errors[0] ? `${job.errors[0].file} : ${errorText(job.errors[0])}` : '';
+    jobBox(`<div class="t">${esc(title)}</div><div class="s">${esc(parts.join(' · '))}</div>` +
+      (first ? `<div class="s" title="${esc(first)}">${esc(first)}</div>` : '') +
+      `<div class="a"><button class="btn" data-x>${esc(t('job.close'))}</button>${job.backup ? `<button class="btn main" data-open>${esc(t('job.openFolder'))}</button>` : ''}</div>`);
+  }
+}
+
+let jobHidden = 0;
+function jobBox(html) {
+  const box = $('job');
+  box.innerHTML = html;
+  box.classList.add('on');
+}
+$('job').addEventListener('click', e => {
+  if (e.target.closest('[data-x]')) {
+    jobHidden = Math.max(status.job?.finished || 0, status.del?.finished || 0) || 1;
+    $('job').classList.remove('on');
+  }
+  if (e.target.closest('[data-open]')) post('/api/open-export', {});
+});
+function showJob(job) {
+  if (!job) return;
+  if (job.active) {
+    const pct = job.bytes ? Math.min(100, job.doneBytes / job.bytes * 100) : 0;
+    const left = job.speed ? (job.bytes - job.doneBytes) / job.speed : 0;
+    const speed = [t('job.speed', {speed: fmtSize(job.speed)}), left > 1 ? t('job.left', {time: fmtDur(left)}) : ''].filter(Boolean).join(' · ');
+    jobBox(`<div class="t">${esc(t('job.copying', {done: fmtNum(Math.min(job.doneFiles + 1, job.files)), total: fmtNum(job.files), percent: Math.round(pct)}))}</div>` +
+      `<div class="s">${esc(job.current)}</div><div class="meter"><i style="width:${pct}%"></i></div>` +
+      `<div class="s" style="margin-top:6px">${esc(speed)}</div>`);
+  } else if (job.finished && job.finished !== jobHidden) {
+    const ok = job.files - job.errors.length - job.skipped;
+    const parts = [];
+    if (ok) parts.push(tn('job.copied', ok));
+    if (job.skipped) parts.push(tn('job.already', job.skipped));
+    if (job.errors.length) parts.push(tn('job.failed', job.errors.length));
+    const first = job.errors[0] ? `${job.errors[0].file} : ${errorText(job.errors[0])}` : '';
+    jobBox(`<div class="t">${esc(job.errors.length ? t('job.copyDoneErrors') : t('job.copyDone'))}</div><div class="s">${esc(parts.join(' · '))}</div>` +
+      (first ? `<div class="s" title="${esc(first)}">${esc(first)}</div>` : '') +
+      `<div class="a"><button class="btn" data-x>${esc(t('job.close'))}</button><button class="btn main" data-open>${esc(t('job.openFolder'))}</button></div>`);
+  }
+}
+function showJobs(s) {
+  const deleting = s.del?.active || (!s.job?.active && (s.del?.finished || 0) > (s.job?.finished || 0));
+  if (deleting) showDelete(s.del); else showJob(s.job);
+}
+
+function openLb(index) {
+  current = index;
+  $('lb').classList.add('on');
+  renderLb();
+}
+// Removing a <video> does not stop its download: it would keep an iPhone connection busy.
+function stopVideo() {
+  const v = $('stage').querySelector('video');
+  if (!v) return;
+  v.onerror = v.onloadedmetadata = null;
+  v.pause();
+  v.removeAttribute('src');
+  v.load();
+}
+function closeLb() {
+  stopVideo();
+  $('lb').classList.remove('on');
+  $('stage').innerHTML = '';
+  current = -1;
+  $('q').focus();
+}
+$('stage').addEventListener('click', e => {
+  if (e.target.id === 'prev') step(-1);
+  if (e.target.id === 'next') step(1);
+});
+function renderLb() {
+  const i = view[current];
+  if (!i) return closeLb();
+  stopVideo();
+  const stage = $('stage');
+  const nav = (current > 0 ? `<button class="nav" id="prev" aria-label="${esc(t('lb.prev'))}">‹</button>` : '') +
+    (current < view.length-1 ? `<button class="nav" id="next" aria-label="${esc(t('lb.next'))}">›</button>` : '');
+  const offline = i.c || !connected;
+  const version = i.e ? 'edited' : '';
+  if (i.k === 'v' && !offline) {
+    stage.innerHTML = `<video controls autoplay playsinline poster="${thumbUrl(i)}" src="${fileUrl(i, version)}"></video>${nav}`;
+    const video = stage.querySelector('video');
+    const unplayable = () => {
+      stopVideo();
+      stage.innerHTML = `<img alt="" src="${thumbUrl(i)}"><div class="msg">${esc(t('lb.videoUnplayable'))}</div>${nav}`;
+    };
+    video.onerror = unplayable;
+    // Without an HEVC decoder the browser plays sound over a black picture, with no error.
+    video.onloadedmetadata = () => { if (!video.videoWidth) unplayable(); };
+  } else if (!offline && PLAYABLE_IMG.test(i.n)) {
+    stage.innerHTML = `<img alt="" src="${thumbUrl(i)}">${nav}`;
+    const full = new Image();
+    full.onload = () => { const img = stage.querySelector('img'); if (img && view[current] === i) img.src = full.src; };
+    full.src = fileUrl(i, version);
+  } else {
+    const msg = i.c ? t('lb.reducedCloud') : !connected ? t('lb.reducedOffline') : t('lb.reducedPhoto');
+    stage.innerHTML = `<img alt="" src="${thumbUrl(i)}"><div class="msg">${esc(msg)}</div>${nav}`;
+  }
+  const showOrig = i.o && i.o.toLowerCase() !== i.nl;
+  const where = i.h ? t('where.hidden') : i.r ? t('where.trash') : i.c ? t('where.cloud') : t('where.phone');
+  const row = (label, value) => `<dt>${esc(label)}</dt><dd>${esc(value)}</dd>`;
+  $('side').innerHTML = `<button class="btn" id="close" aria-label="${esc(t('lb.close'))}">✕</button>
+    <h3>${esc(i.n)}</h3>
+    <dl>
+      ${row(t('lb.taken'), fmtDate(i.t))}
+      ${i.s ? row(t('lb.size'), fmtSize(i.s)) : ''}
+      ${i.k === 'v' && i.d ? row(t('lb.duration'), fmtDur(i.d)) : ''}
+      ${row(t('lb.where'), where)}
+      ${showOrig ? row(t('lb.original'), i.o) : ''}
+      ${row(t('lb.folder'), i.p.slice(1, i.p.lastIndexOf('/')))}
+    </dl>
+    <div class="acts">${i.c
+      ? `<p class="hint">${esc(t('lb.cloudHint'))}</p>`
+      : i.e
+        ? `<button class="btn main" id="cpe">${esc(t('lb.copyEdited'))}</button><button class="btn" id="cpo">${esc(t('lb.copyOriginal'))}</button>`
+        : `<button class="btn main" id="cpo">${esc(t('lb.copy'))}</button>`}
+      ${i.x ? `<button class="btn danger-line" id="del1">${esc(t('lb.delete'))}</button>` : ''}
+    </div>
+    ${i.k === 'v' && i.e ? `<p class="hint">${esc(t('lb.previewEdited'))}</p>` : ''}
+    <p class="hint">${esc(t('lb.keys'))}</p>`;
+  $('close').onclick = closeLb;
+  const cpe = $('cpe'), cpo = $('cpo');
+  if (cpe) cpe.onclick = () => copy([i.p], 'auto');
+  if (cpo) cpo.onclick = () => copy([i.p], 'original');
+  const del1 = $('del1');
+  if (del1) del1.onclick = () => askDelete([i.p]);
+  for (const n of [current-1, current+1]) if (view[n]) new Image().src = thumbUrl(view[n]);
+}
+function step(d) {
+  if (view[current + d]) { current += d; renderLb(); }
+}
+
+document.addEventListener('keydown', e => {
+  const typingText = e.target.tagName === 'INPUT' && e.target.type !== 'range';
+  if ($('dlg').classList.contains('on')) {
+    if (e.key === 'Escape') closeDlg();
+    return;
+  }
+  if ($('lb').classList.contains('on')) {
+    if (e.key === 'Escape') closeLb();
+    else if (e.key === 'ArrowLeft') step(-1);
+    else if (e.key === 'ArrowRight') step(1);
+    return;
+  }
+  if (e.key === '/' && !typingText) { e.preventDefault(); $('q').focus(); $('q').select(); }
+  else if (e.key === 'Escape') {
+    if (sel.size) { sel.clear(); refreshCards(); }
+    else if (query) { $('q').value = ''; query = ''; apply(); }
+  }
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a' && !typingText) {
+    e.preventDefault();
+    for (const i of view) if (!i.c) sel.add(i.p);
+    refreshCards();
+  }
+  else if (e.key === 'Enter' && typingText && view.length) openLb(0);
+});
+
+async function loadItems(nextRev) {
+  const data = await (await fetch('/api/items')).json();
+  items = data;
+  indexItems();
+  rev = nextRev;
+  const known = new Set(items.map(i => i.p));
+  for (const p of sel) if (!known.has(p)) sel.delete(p);
+  apply(true);
+}
+
+function showStatus(s) {
+  connected = s.state === 'ok';
+  const pill = $('pill'), label = pill.querySelector('span');
+  pill.classList.toggle('ok', connected);
+  pill.classList.toggle('warn', s.state === 'service' || s.state === 'error');
+  label.textContent = s.demo ? t('status.demo')
+    : connected ? tn('status.connected', items.filter(i => !i.c).length, {device: s.device || 'iPhone'})
+    : s.state === 'service' ? t('status.service')
+    : s.state === 'nodevice' ? t('status.nodevice')
+    : s.state === 'error' ? t('status.error')
+    : s.state === 'starting' ? t('status.starting') : t('status.connecting');
+  const notice = $('notice');
+  let text = '', action = '';
+  if (s.state === 'service' && items.length) { text = t('notice.service'); action = `<button class="btn" id="startsvc2">${esc(t('notice.start'))}</button>`; }
+  else if (s.state === 'nodevice' && items.length) text = t('notice.nodevice');
+  else if (s.state === 'error' && items.length) text = t('notice.error', {detail: errorText(s.error)});
+  notice.innerHTML = esc(text) + action;
+  notice.classList.toggle('on', !!text);
+  const b = $('startsvc2');
+  if (b) b.onclick = () => post('/api/start-service', {});
+  $('line').firstElementChild.style.width = s.ready && s.progress != null ? Math.round(s.progress * 100) + '%' : '0';
+}
+
+async function tick() {
+  clearTimeout(tick.t);
+  let delay = 2500;
+  try {
+    const s = await (await fetch('/api/status')).json();
+    status = s;
+    if (s.rev !== rev && s.ready) await loadItems(s.rev);
+    showStatus(s);
+    showEmpty();
+    showJobs(s);
+    if (s.job?.active || s.del?.active) delay = 400;
+    else if (!s.ready) delay = 500;
+  } catch {
+    $('pill').className = 'pill';
+    $('pill').querySelector('span').textContent = t('status.stopped');
+  }
+  tick.t = setTimeout(tick, delay);
+}
+
+(async () => {
+  zoom = +load('zoom', 150) || 150;
+  $('zoom').value = zoom;
+  const params = new URLSearchParams(location.search);
+  query = params.get('q') || '';
+  $('q').value = query;
+  await loadLang(LANGS.includes(params.get('lang')) ? params.get('lang') : preferredLang());
+  tick();
+})();
+</script>
+</body>
+</html>
